@@ -1,47 +1,51 @@
 # dsh-token-widget
 
-DeepSeek Harness（DSH）Web UI 插件：在页面右下角显示一个可折叠的悬浮窗，汇总所有会话的 Token 用量。
+English | [中文](README.zh.md)
 
-## 功能
+A floating widget for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) Web UI: a collapsible overlay in the page's bottom-right corner summarizing token usage across all sessions.
 
-- **全局合计**：所有聊天窗口累计的输入 / 输出 Token 总量
-- **按来源分组**：按 `provider/model` 分别累计用量，一眼看出是哪个模型在烧 Token
-- **逐窗口明细**：
-  - 标题、运行中 / 空闲状态
-  - 轮数与步数（来自 `sessionStats` 投影）
-  - Token 用量（来自 `tokenUsage` 投影）
-  - 上下文占用百分比（来自 `contextPressure` 投影，有数据时才显示）
-- **点击某一行**直接切换到对应聊天窗口
-- 点右上角 `–` 收成一个小胶囊，只显示总量
+![license](https://img.shields.io/badge/license-MIT-green)
 
-## 环境要求
+## Features
 
-- 已安装 DSH，且使用带 Web GUI 的 profile（默认为 `web`）
-- DSH 版本需包含客户端模块系统（`dsh.client`）与 `shell.overlay` 槽位
+- **Global totals** — cumulative input / output tokens across every chat session
+- **Per-source breakdown** — usage grouped by `provider/model`, so you can see which model is burning tokens
+- **Per-session detail**:
+  - Title, running / idle state
+  - Turns and steps (from the `sessionStats` projection)
+  - Token usage (from the `tokenUsage` projection)
+  - Context occupancy percentage (from the `contextPressure` projection, shown when data exists)
+- **Click a row** to switch to that session
+- Collapse to a small pill showing just the grand total
 
-## 安装
+## Requirements
+
+- DSH installed, booted with a Web GUI profile (the default is `web`)
+- A DSH version that includes the client module system (`dsh.client`) and the `shell.overlay` slot
+
+## Install
 
 ```sh
 dsh plugin --profile web add github:cxc4002-stack/dsh-token-widget
 ```
 
-`dsh plugin` 会把包链接进 profile 并自动登记 `dsh.bundle` 层，然后**重启 `dsh web`** 生效：
+`dsh plugin` links the package into the profile and registers its `dsh.bundle` layer. Then **restart `dsh web`**:
 
 ```sh
 dsh web
 ```
 
-> 客户端插件集合的增删需要重启服务，只刷新浏览器页面不够。
+> Adding or removing client plugins requires a server restart — refreshing the browser page is not enough.
 
-### 关于安装权限
+### About build permissions
 
-本仓库已把构建产物 `client.js` 与 `lib/index.js` 直接提交进版本库，**没有 `prepare` 构建脚本**，所以 pnpm 不会要求你授权执行构建脚本，安装即可用。
+This repo commits the built artifacts (`client.js`, `lib/index.js`) directly and ships **no `prepare` script**, so pnpm never asks you to approve running a build script at install time. Install and go.
 
-### 手动安装（不使用 `dsh plugin`）
+### Manual install (without `dsh plugin`)
 
-1. 把本目录复制到 profile 的依赖目录，例如
+1. Copy this directory into the profile's dependency directory, e.g.
    `$DSH_HOME/profiles/web/node_modules/dsh-token-widget/`
-2. 在 `$DSH_HOME/profiles/web/cordis.patch.yml` 末尾追加：
+2. Append to `$DSH_HOME/profiles/web/cordis.patch.yml`:
 
    ```yaml
    - insert:
@@ -49,54 +53,37 @@ dsh web
          name: dsh-token-widget
    ```
 
-3. 重启 `dsh web`。
+3. Restart `dsh web`.
 
-## 卸载
+## Uninstall
 
 ```sh
 dsh plugin --profile web remove dsh-token-widget
 ```
 
-手动安装的则从 `cordis.patch.yml` 删掉 `token-widget` 那一块、删除复制的目录，再重启 `dsh web`。
+For a manual install, delete the `token-widget` insert block from `cordis.patch.yml`, remove the copied directory, and restart `dsh web`.
 
-## 工作原理
+## How it works
 
-插件由两部分组成，写在同一个包里：
+The plugin has two halves in one package:
 
-| 文件 | 运行位置 | 作用 |
+| File | Runs on | Role |
 | --- | --- | --- |
-| `lib/index.js` | Host（Node） | 注册 `tokenUsageBySource` 会话投影，按 `provider/model` 累计用量 |
-| `client.js` | Browser | 悬浮窗组件，读投影数据并渲染，注册到 `shell.overlay` 槽位 |
-| `cordis.patch.yml` | — | bundle 层，插入 `token-widget` 这一行 |
+| `lib/index.js` | Host (Node) | Registers the `tokenUsageBySource` session projection, accumulating usage per `provider/model` |
+| `client.js` | Browser | The widget component; reads projection data and renders into the `shell.overlay` slot |
+| `cordis.patch.yml` | — | The bundle layer, inserting the `token-widget` row |
 
-数据全部来自 DSH 已有的 `tokenUsage` / `sessionStats` / `contextPressure` 会话投影，**不额外起后端服务，也不上报任何数据**。
+All data comes from DSH's existing `tokenUsage` / `sessionStats` / `contextPressure` session projections — **no extra backend service, no data leaves your machine**.
 
-悬浮窗注册在 `shell.overlay` 槽位，是一个「加性」浮层，不会替换任何自带 UI。
+The widget registers into the `shell.overlay` slot, an additive floating layer that replaces none of the built-in UI.
 
-## 已知限制
+## Known limitations
 
-- DSH 的插件 API 处于 pre-stable 阶段，投影字段可能随版本变化；如遇悬浮窗空白，先确认 DSH 版本。
-- 同一轮 / 同一步的 usage 采样与最终结算会互相替换而非累加，这是有意为之（避免重复计数），因此数值与账单可能存在正常误差。
+- DSH's plugin APIs are pre-stable; projection fields may change between versions. If the widget renders blank, check your DSH version first.
+- A usage sample and the final settlement for the same turn/step replace each other rather than add (intentional, to avoid double counting), so figures may differ slightly from your provider's bill.
 
-## 许可
+## License
 
-MIT，见 [LICENSE](LICENSE)。
+MIT — see [LICENSE](LICENSE).
 
-本项目的按来源累计逻辑派生自 DeepSeek Harness 的 `tokenUsage` 投影（`packages/llm/token-meter`，MIT，Copyright (c) 2026 DeepSeek），详见 [NOTICE](NOTICE)。
-
----
-
-## English
-
-A floating widget for the DeepSeek Harness Web UI showing total token usage across all sessions, grouped by `provider/model`, with per-session status. Click a row to switch to that session.
-
-Install (no build script, so no pnpm build permission prompt):
-
-```sh
-dsh plugin --profile web add github:cxc4002-stack/dsh-token-widget
-dsh web   # restart to pick up the new client plugin
-```
-
-Remove with `dsh plugin --profile web remove dsh-token-widget`.
-
-Licensed MIT. The per-source usage fold derives from DeepSeek Harness `packages/llm/token-meter` (MIT, Copyright (c) 2026 DeepSeek) — see [NOTICE](NOTICE).
+The per-source usage fold derives from DeepSeek Harness's `tokenUsage` projection (`packages/llm/token-meter`, MIT, Copyright (c) 2026 DeepSeek) — see [NOTICE](NOTICE).

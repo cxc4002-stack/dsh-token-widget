@@ -1,0 +1,20 @@
+NOTICE
+======
+
+dsh-token-widget
+Copyright (c) 2026 dsh-token-widget contributors
+
+This product includes software derived from DeepSeek Harness.
+
+DeepSeek Harness
+Copyright (c) 2026 DeepSeek
+Licensed under the MIT License.
+https://github.com/deepseek-ai/deepseek-harness
+
+The per-source token-usage fold in lib/index.js is derived from the
+`tokenUsage` session projection in
+packages/llm/token-meter/src/usage-projection.ts: the bucket conversion,
+the equality test, and the rule that a usage sample and the final settlement
+for the same (turn, step) replace each other instead of double counting.
+
+The MIT License text covering this derivative work is reproduced in LICENSE.

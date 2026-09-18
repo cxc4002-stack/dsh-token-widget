@@ -1,0 +1,5 @@
+# Bundle layer contributed by dsh-token-widget.
+# A profile that lists this package in `dsh.profile.bundles` gets the row below.
+- insert:
+    - id: token-widget
+      name: dsh-token-widget
